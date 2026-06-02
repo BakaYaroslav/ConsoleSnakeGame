@@ -10,89 +10,123 @@ class Program
 {
     static void Main()
     {
-        // 1. Mängu algus ja seadistamine
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        Console.InputEncoding = System.Text.Encoding.UTF8;
         Console.CursorVisible = false;
         Console.Clear();
-        Console.Write("Vali raskus (1-3): ");
+        Console.Write("Vali režiim (1-Lihtne, 2-Keskmine, 3-Raske, 4-2 mängijat): ");
         if (!int.TryParse(Console.ReadLine(), out int tase)) tase = 1;
-
         MänguSeaded seaded = new MänguSeaded(tase);
-        Console.SetWindowSize(seaded.Laius * Kaart.CW, seaded.Kõrgus + 3);
-        Console.SetBufferSize(seaded.Laius * Kaart.CW, seaded.Kõrgus + 3);
+
+        Console.SetWindowSize(seaded.Laius * 2 + 20, seaded.Kõrgus + 3);
+        Console.SetBufferSize(seaded.Laius * 2 + 20, seaded.Kõrgus + 3);
 
         Kaart kaart = new Kaart(seaded.Laius, seaded.Kõrgus);
-        Uss uss = new Uss(10, 10, 3);
+        kaart.Joonista(new Punkt(0, 0, ""));
+
+        Uss uss1 = new Uss(10, 10, 3);
+        Uss2 uss2 = seaded.KahesMängija ? new Uss2(seaded.Laius - 12, 10, 3) : null;
+
         Toit toit = new Toit(seaded.Laius, seaded.Kõrgus);
-        int skoor = 0;
+        toit.LooUusToit(uss1.Keha);
 
-        kaart.Joonista();
-        // Joonistame kaardi (välisseinad)
-        kaart.Joonista();
+        int skoor1 = 0;
+        int skoor2 = 0;
 
-        toit.LooUusToit(uss.Keha);
-        // 2. Mängu peatsükkel (Game Loop)
         while (true)
         {
-            // Sisendi lugemine (kas kasutaja vajutas nooleklahvi?)
-            if (Console.KeyAvailable)
+            // Читаем все нажатые клавиши за этот кадр
+            while (Console.KeyAvailable)
             {
                 ConsoleKeyInfo klahv = Console.ReadKey(true);
-                // Muudame suunda, aga väldime tagurdamist
-                if (klahv.Key == ConsoleKey.UpArrow && uss.PraeguneSuund != Suund.Alla)
-                    uss.PraeguneSuund = Suund.Üles;
-                else if (klahv.Key == ConsoleKey.DownArrow && uss.PraeguneSuund != Suund.Üles)
-                    uss.PraeguneSuund = Suund.Alla;
-                else if (klahv.Key == ConsoleKey.LeftArrow && uss.PraeguneSuund != Suund.Paremale)
-                    uss.PraeguneSuund = Suund.Vasakule;
-                else if (klahv.Key == ConsoleKey.RightArrow && uss.PraeguneSuund != Suund.Vasakule)
-                    uss.PraeguneSuund = Suund.Paremale;
+
+                // Игрок 1 — стрелки
+                if (klahv.Key == ConsoleKey.UpArrow && uss1.PraeguneSuund != Suund.Alla)
+                    uss1.PraeguneSuund = Suund.Üles;
+                else if (klahv.Key == ConsoleKey.DownArrow && uss1.PraeguneSuund != Suund.Üles)
+                    uss1.PraeguneSuund = Suund.Alla;
+                else if (klahv.Key == ConsoleKey.LeftArrow && uss1.PraeguneSuund != Suund.Paremale)
+                    uss1.PraeguneSuund = Suund.Vasakule;
+                else if (klahv.Key == ConsoleKey.RightArrow && uss1.PraeguneSuund != Suund.Vasakule)
+                    uss1.PraeguneSuund = Suund.Paremale;
+
+                // Игрок 2 — WASD
+                if (uss2 != null)
+                {
+                    if (klahv.Key == ConsoleKey.W && uss2.PraeguneSuund != Suund.Alla)
+                        uss2.PraeguneSuund = Suund.Üles;
+                    else if (klahv.Key == ConsoleKey.S && uss2.PraeguneSuund != Suund.Üles)
+                        uss2.PraeguneSuund = Suund.Alla;
+                    else if (klahv.Key == ConsoleKey.A && uss2.PraeguneSuund != Suund.Paremale)
+                        uss2.PraeguneSuund = Suund.Vasakule;
+                    else if (klahv.Key == ConsoleKey.D && uss2.PraeguneSuund != Suund.Vasakule)
+                        uss2.PraeguneSuund = Suund.Paremale;
+                }
             }
 
-            // Objektide uuendamine
-            uss.Liigu();
-            Punkt pea = uss.HangiPea();
+            uss1.Liigu();
+            uss2?.Liigu();
 
-            // Mängu lõpu kontroll
-            if (kaart.OnSein(pea.X, pea.Y) || uss.KasHammustasEnnast())
+            Punkt pea1 = uss1.HangiPea();
+            Punkt pea2 = uss2?.HangiPea();
+
+            // Проверка столкновений игрок 1
+            bool uss1Suri = kaart.OnSein(pea1.X, pea1.Y) || uss1.KasHammustasEnnast();
+            // Проверка столкновений игрок 2
+            bool uss2Suri = uss2 != null && (kaart.OnSein(pea2.X, pea2.Y) || uss2.KasHammustasEnnast());
+
+            if (seaded.KahesMängija)
             {
-                break;
+                if (uss1Suri || uss2Suri) break;
             }
-
-
-
-            // Toidu söömine
-            if (pea.X == toit.Asukoht.X && pea.Y == toit.Asukoht.Y)
+            else
             {
-                skoor += 10;
-                uss.Kasva();
-                toit.LooUusToit(uss.Keha); // Uus toit luuakse ainult SIIN, kui uss reaalselt sõi
+                if (uss1Suri) break;
             }
 
-            // Kuvame skoori reaalajas (akna ülanurgas raami sees)
-            Console.SetCursorPosition(2, 0);
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write($" Skoor: {skoor} ");
+            // Еда
+            if (pea1.X == toit.Asukoht.X && pea1.Y == toit.Asukoht.Y)
+            {
+                skoor1 += 10;
+                uss1.Kasva();
+                toit.LooUusToit(uss1.Keha);
+            }
+            if (uss2 != null && pea2.X == toit.Asukoht.X && pea2.Y == toit.Asukoht.Y)
+            {
+                skoor2 += 10;
+                uss2.Kasva();
+                toit.LooUusToit(uss2.Keha);
+            }
+
+            // Счёт
+            Console.SetCursorPosition(seaded.Laius + 2, 2);
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write($"Mängija 1: {skoor1}    ");
+            if (seaded.KahesMängija)
+            {
+                Console.SetCursorPosition(seaded.Laius + 2, 3);
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write($"Mängija 2: {skoor2}    ");
+            }
             Console.ResetColor();
 
-            // Mängu kiirus vastavalt seadetele
             Thread.Sleep(seaded.KiirusMS);
         }
 
-        // 3. Pärast mängu lõppu
+        // Конец игры
         Console.Clear();
         Console.SetCursorPosition(0, 2);
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"MÄNG LÄBI! Sinu lõplik skoor: {skoor}");
+        if (seaded.KahesMängija)
+            Console.WriteLine($"MÄNG LÄBI! M1: {skoor1}  M2: {skoor2}");
+        else
+            Console.WriteLine($"MÄNG LÄBI! Skoor: {skoor1}");
         Console.ResetColor();
-
         Console.Write("Sisesta oma nimi edetabeli jaoks: ");
         string nimi = Console.ReadLine();
         if (string.IsNullOrWhiteSpace(nimi)) nimi = "Mängija";
-
-        // Salvestamine ja edetabeli kuvamine
-        Edetabel.Salvesta(nimi, skoor);
+        Edetabel.Salvesta(nimi, skoor1);
         Edetabel.KuvaEdetabel();
-
         Console.ReadLine();
     }
 }

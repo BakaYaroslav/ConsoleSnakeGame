@@ -22,8 +22,9 @@
         {
             sisseIlmunud = false;
             // Genereerime suvalised koordinaadid ekraani piirides
-            x = rnd.Next(2, ekraaniLaius - 2);
-            y = rnd.Next(2, ekraaniKõrgus - 2);
+         
+            x = rnd.Next(1, (ekraaniLaius - 4) / 2) * 2;
+            y = rnd.Next(1, ekraaniKõrgus - 2);
 
             // Kontrollime iga ussi keha punkti
             foreach (var p in keha)
@@ -37,7 +38,7 @@
         } while (sisseIlmunud); // Tsükkel kordub, kuni leitakse vaba koht
 
         // Loome uue toidu punkti ja joonistame selle välja
-        Asukoht = new Punkt(x, y, '@');
+        Asukoht = new Punkt(x, y, "🍎");
         Asukoht.Joonista();
     }
 }

@@ -8,9 +8,9 @@ public class Punkt
 {
     public int X { get; set; }
     public int Y { get; set; }
-    public char Sümbol { get; set; } // Näiteks '*' ussi jaoks, '@' toidu jaoks
+    public string Sümbol { get; set; } // Näiteks '*' ussi jaoks, '@' toidu jaoks
 
-    public Punkt(int x, int y, char sümbol)
+    public Punkt(int x, int y, string sümbol)
     {
         X = x;
         Y = y;
@@ -21,7 +21,14 @@ public class Punkt
     public void Joonista()
     {
         Console.SetCursorPosition(X, Y);
+        if ((X / 2 + Y) % 2 == 0)
+            Console.BackgroundColor = ConsoleColor.DarkGreen;
+        else
+            Console.BackgroundColor = ConsoleColor.Green;
+        Console.Write("  "); 
+        Console.SetCursorPosition(X, Y);
         Console.Write(Sümbol);
+        Console.ResetColor();
     }
 
     // Puhastab eelmise asukoha (kui uss liigub edasi)
