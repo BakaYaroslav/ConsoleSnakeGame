@@ -17,7 +17,7 @@ class Program
         Console.Write("Vali režiim (1-Lihtne, 2-Keskmine, 3-Raske, 4-2 mängijat): ");
         if (!int.TryParse(Console.ReadLine(), out int tase)) tase = 1;
         MänguSeaded seaded = new MänguSeaded(tase);
-
+        Console.Clear();
         Console.SetWindowSize(seaded.Laius * 2 + 20, seaded.Kõrgus + 3);
         Console.SetBufferSize(seaded.Laius * 2 + 20, seaded.Kõrgus + 3);
 
@@ -27,6 +27,8 @@ class Program
         Uss uss1 = new Uss(10, 10, 3);
         Uss2 uss2 = seaded.KahesMängija ? new Uss2(seaded.Laius - 12, 10, 3) : null;
 
+
+
         Toit toit = new Toit(seaded.Laius, seaded.Kõrgus);
         toit.LooUusToit(uss1.Keha);
 
@@ -35,12 +37,11 @@ class Program
 
         while (true)
         {
-            // Читаем все нажатые клавиши за этот кадр
+           
             while (Console.KeyAvailable)
             {
                 ConsoleKeyInfo klahv = Console.ReadKey(true);
 
-                // Игрок 1 — стрелки
                 if (klahv.Key == ConsoleKey.UpArrow && uss1.PraeguneSuund != Suund.Alla)
                     uss1.PraeguneSuund = Suund.Üles;
                 else if (klahv.Key == ConsoleKey.DownArrow && uss1.PraeguneSuund != Suund.Üles)
@@ -50,7 +51,7 @@ class Program
                 else if (klahv.Key == ConsoleKey.RightArrow && uss1.PraeguneSuund != Suund.Vasakule)
                     uss1.PraeguneSuund = Suund.Paremale;
 
-                // Игрок 2 — WASD
+             
                 if (uss2 != null)
                 {
                     if (klahv.Key == ConsoleKey.W && uss2.PraeguneSuund != Suund.Alla)
@@ -67,12 +68,28 @@ class Program
             uss1.Liigu();
             uss2?.Liigu();
 
+            // Kontrollime kokkupõrget kahe ussi vahel
+            if (uss2 != null)
+            {
+                Punkt p1 = uss1.HangiPea();
+                Punkt p2 = uss2.HangiPea();
+
+                // Uss1 pea põrkas uss2 kehasse
+                bool uss1OstusTeis = uss2.Keha.Any(p => p.X == p1.X && p.Y == p1.Y);
+                // Uss2 pea põrkas uss1 kehasse
+                bool uss2OstusTeis = uss1.Keha.Any(p => p.X == p2.X && p.Y == p2.Y);
+                // Pead põrkasid otsa kokku
+                bool peadPõrkasid = p1.X == p2.X && p1.Y == p2.Y;
+
+                if (uss1OstusTeis || uss2OstusTeis || peadPõrkasid) break;
+            }
+
             Punkt pea1 = uss1.HangiPea();
             Punkt pea2 = uss2?.HangiPea();
 
-            // Проверка столкновений игрок 1
+         
             bool uss1Suri = kaart.OnSein(pea1.X, pea1.Y) || uss1.KasHammustasEnnast();
-            // Проверка столкновений игрок 2
+         
             bool uss2Suri = uss2 != null && (kaart.OnSein(pea2.X, pea2.Y) || uss2.KasHammustasEnnast());
 
             if (seaded.KahesMängija)
@@ -117,8 +134,12 @@ class Program
         Console.Clear();
         Console.SetCursorPosition(0, 2);
         Console.ForegroundColor = ConsoleColor.Red;
+        Console.SetCursorPosition(0, 0);
+        Console.SetCursorPosition(0, 0);
+      
         if (seaded.KahesMängija)
             Console.WriteLine($"MÄNG LÄBI! M1: {skoor1}  M2: {skoor2}");
+
         else
             Console.WriteLine($"MÄNG LÄBI! Skoor: {skoor1}");
         Console.ResetColor();
